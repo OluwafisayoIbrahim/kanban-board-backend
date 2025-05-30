@@ -12,31 +12,36 @@ init_db()
 app = FastAPI(
     title="FlowSpace API",  
     description="REST API for FlowSpace Kanban Board",        
-    version="0.1.0",  
-    dependencies=[Depends(verify_api_key)]                    
+    version="0.1.0"
 )
+
 
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
+
     openapi_schema = get_openapi(
         title="FlowSpace API",
         version="1.0.0",
         description="REST API for FlowSpace Kanban Board",
         routes=app.routes,
     )
+
     openapi_schema["components"]["securitySchemes"] = {
-        "APIKeyHeader": {
-            "type": "apiKey",
-            "in": "header",
-            "name": "Authorization"
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
         }
     }
-    openapi_schema["security"] = [{"APIKeyHeader": []}]
+    # apply globally, or you can apply per-route via `security=[...]`
+    openapi_schema["security"] = [{"BearerAuth": []}]
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
 app.openapi = custom_openapi
+
 
 app.add_middleware(
     CORSMiddleware,

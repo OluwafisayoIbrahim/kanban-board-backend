@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import APIKeyHeader
 
-API_KEY = "FlowSpace"
+API_KEY = "your-secret-api-key"
 API_KEY_NAME = "Authorization"
 
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)

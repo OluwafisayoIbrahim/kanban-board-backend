@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import timedelta
+from app.dependencies import verify_api_key
 from app.schemas.user import UserSignUp, UserSignIn, Token, User
 from app.db.crud import get_user_by_email, get_user_by_username, create_user
 from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
@@ -81,5 +82,9 @@ async def sign_in(data: UserSignIn):
 
 
 @router.get("/me", response_model=User)
-async def read_me(current=Depends(get_current_user)):
-    return User(id=current[0], username=current[1], email=current[2])
+async def read_me(current_user=Depends(get_current_user)):
+    return User(
+        id=current_user[0],
+        username=current_user[1],
+        email=current_user[2]
+    )
