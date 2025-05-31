@@ -1,9 +1,8 @@
 from datetime import timedelta
 
-SECRET_KEY = "your-secret-key-here"
+SECRET_KEY = "your-secret-key-here"  # Change this in production!
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
 CORS_ORIGINS = [
     "http://localhost:3000",
     "https://kanban-board-backend-3bfa.onrender.com"
