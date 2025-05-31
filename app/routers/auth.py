@@ -17,7 +17,7 @@ async def get_current_user(
 ):
     token = creds.credentials
     from jose import JWTError, jwt
-    from core.config import SECRET_KEY, ALGORITHM
+    from app.core.config import SECRET_KEY, ALGORITHM
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
