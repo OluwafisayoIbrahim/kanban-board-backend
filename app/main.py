@@ -1,49 +1,51 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import CORS_ORIGINS 
-from app.routers.auth import router as auth_router
-from app.db.base import init_db
 from fastapi.openapi.utils import get_openapi
+
+from app.core.config import CORS_ORIGINS
+from app.db.base import init_db
+from app.routers.auth import router as auth_router
 
 init_db()
 
+
 app = FastAPI(
-    title="FlowSpace API",  
-    description="REST API for FlowSpace Kanban Board",        
-    version="0.1.0"
+    title="FlowSpace API",
+    description="REST API for FlowSpace Kanban Board",
+    version="0.1.0",
 )
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,     
+    allow_credentials=True,
+    allow_methods=["*"],            
+    allow_headers=["*"],            
+)
+
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return {"status": "ok"}
 
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
 
-    openapi_schema = get_openapi(
+    schema = get_openapi(
         title="FlowSpace API",
         version="1.0.0",
         description="REST API for FlowSpace Kanban Board",
         routes=app.routes,
     )
-
-    openapi_schema["components"]["securitySchemes"] = {
-        "BearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-        }
+    schema["components"]["securitySchemes"] = {
+        "BearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
     }
-    openapi_schema["security"] = [{"BearerAuth": []}]
+    schema["security"] = [{"BearerAuth": []}]
 
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
+    app.openapi_schema = schema
+    return schema
 
 app.openapi = custom_openapi
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
