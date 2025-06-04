@@ -1,5 +1,4 @@
-# 🔐 FastAPI Auth API with API Key Authentication
-
+# 🔐 FastAPI API for FlowSpace Kanban board
 This is a simple authentication API built with **FastAPI**, featuring:
 
 - User Sign Up
