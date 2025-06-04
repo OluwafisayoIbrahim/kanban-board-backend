@@ -1,23 +1,35 @@
-import sqlite3
+# app/db/base.py
+import os
+from supabase import create_client, Client
+from typing import Optional
 
-DB_PATH = "users.db"
+# Supabase configuration
+SUPABASE_URL = os.getenv("SUPABASE_URL", "your-supabase-url")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "your-supabase-anon-key")
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            username TEXT UNIQUE,
-            email TEXT UNIQUE NOT NULL,
-            hashed_password TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-    )
-    conn.commit()
-    conn.close()
+    """
+    Initialize database connection and verify table exists.
+    Note: Table should be created via Supabase dashboard or SQL editor.
+    """
+    try:
+        supabase = get_supabase_client()
+        # Test connection by attempting to query the users table
+        response = supabase.table("users").select("count", count="exact").limit(1).execute()
+        print(f"✅ Supabase connection successful. Users table exists.")
+        return True
+    except Exception as e:
+        print(f"❌ Supabase connection failed: {e}")
+        print("Make sure to:")
+        print("1. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables")
+        print("2. Create the 'users' table in your Supabase dashboard")
+        return False
 
+def get_supabase_client() -> Client:
+    """Get Supabase client instance"""
+    return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+# For backward compatibility, you can alias this
 def get_connection():
-    return sqlite3.connect(DB_PATH)
+    """Legacy function name - returns Supabase client instead of SQLite connection"""
+    return get_supabase_client()
