@@ -3,7 +3,7 @@ from datetime import timedelta
 from typing import Optional
 
 from app.schemas.user import UserSignUp, UserSignIn, Token, User
-from app.db.crud import get_user_by_email, get_user_by_username, create_user, get_user_by_id
+from app.db.crud import get_user_by_email, get_user_by_username, create_user, get_user_by_id, add_token_to_blacklist, is_token_blacklisted
 from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.security import verify_password, create_access_token
 from app.utils.exceptions import UserAlreadyExists, CredentialsInvalid
@@ -27,6 +27,9 @@ def decode_jwt_token(token: str) -> Optional[str]:
     try:
         from jose import JWTError, jwt
         from app.core.config import SECRET_KEY, ALGORITHM
+
+        if is_token_blacklisted(token):
+            return None
        
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -34,15 +37,38 @@ def decode_jwt_token(token: str) -> Optional[str]:
     except JWTError:
         return None
 
+async def get_current_user(request: Request) -> dict:
+    """Dependency to get current authenticated user"""
+    token = extract_token_from_header(request)
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    email = decode_jwt_token(token)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+    
+    user = get_user_by_email(email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    
+    return user
+
 @router.post("/signup", response_model=Token)
 async def sign_up(data: UserSignUp):
-    # Check if user already exists
     if get_user_by_email(data.email):
         raise UserAlreadyExists("email")
     if get_user_by_username(data.username):
         raise UserAlreadyExists("username")
    
-    # Create new user
     user_id = create_user(data.username, data.email, data.password)
     if not user_id:
         raise HTTPException(
@@ -50,7 +76,6 @@ async def sign_up(data: UserSignUp):
             detail="Failed to create user",
         )
    
-    # Create access token
     expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(subject=data.email, expires_delta=expires)
    
@@ -62,12 +87,10 @@ async def sign_up(data: UserSignUp):
 
 @router.post("/signin", response_model=Token)
 async def sign_in(data: UserSignIn):
-    # Get user and verify password
     user = get_user_by_email(data.email)
     if not user or not verify_password(data.password, user["hashed_password"]):
         raise CredentialsInvalid()
    
-    # Create access token
     expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(subject=data.email, expires_delta=expires)
    
@@ -111,3 +134,33 @@ async def get_current_user_simple(request: Request):
         print(f"Auth error: {e}")
    
     return {"error": "Authentication failed", "status": 401}
+
+@router.post("/logout")
+async def logout(request: Request):
+    """
+    Logout endpoint - adds token to blacklist
+    """
+    token = extract_token_from_header(request)
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No token provided"
+        )
+    
+    email = decode_jwt_token(token)
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+    
+    if add_token_to_blacklist(token, ACCESS_TOKEN_EXPIRE_MINUTES):
+        return {
+            "message": "Logged out successfully",
+            "status": "success"
+        }
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Logout failed"
+        )

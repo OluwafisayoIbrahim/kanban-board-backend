@@ -3,6 +3,8 @@ from typing import Optional, Dict, Any
 from app.db.supabase_client import supabase
 from app.core.security import get_password_hash
 from postgrest.exceptions import APIError
+from datetime import datetime, timedelta
+import datetime as dt
 
 def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     """Get user by email from Supabase"""
@@ -76,4 +78,51 @@ def delete_user(user_id: str) -> bool:
         return len(response.data) > 0
     except APIError as e:
         print(f"Error deleting user: {e}")
+        return False
+def add_token_to_blacklist(token: str, expires_minutes: int = 30) -> bool:
+    """Add token to blacklist"""
+    try:
+        expires_at = datetime.now(dt.timezone.utc) + timedelta(minutes=expires_minutes)
+        
+        blacklist_data = {
+            "token": token,
+            "expires_at": expires_at.isoformat()
+        }
+        
+        response = supabase.table("token_blacklist").insert(blacklist_data).execute()
+        return len(response.data) > 0
+    except APIError as e:
+        print(f"Error adding token to blacklist: {e}")
+        return False
+
+def is_token_blacklisted(token: str) -> bool:
+    """Check if token is blacklisted"""
+    try:
+        now = datetime.now(dt.timezone.utc).isoformat()
+        
+        response = supabase.table("token_blacklist")\
+            .select("token")\
+            .eq("token", token)\
+            .gt("expires_at", now)\
+            .execute()
+        
+        return len(response.data) > 0
+    except APIError as e:
+        print(f"Error checking token blacklist: {e}")
+        return False
+
+def cleanup_expired_tokens() -> bool:
+    """Remove expired tokens from blacklist"""
+    try:
+        now = datetime.now(dt.timezone.utc).isoformat()
+        
+        response = supabase.table("token_blacklist")\
+            .delete()\
+            .lt("expires_at", now)\
+            .execute()
+        
+        print(f"Cleaned up {len(response.data)} expired tokens")
+        return True
+    except APIError as e:
+        print(f"Error cleaning up expired tokens: {e}")
         return False
