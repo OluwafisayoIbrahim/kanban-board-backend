@@ -126,3 +126,26 @@ def cleanup_expired_tokens() -> bool:
     except APIError as e:
         print(f"Error cleaning up expired tokens: {e}")
         return False
+    
+def update_user_profile_picture(user_id: str, profile_picture_url: str) -> bool:
+    """Update user's profile picture URL"""
+    try:
+        response = supabase.table("users").update({
+            "profile_picture_url": profile_picture_url
+        }).eq("id", user_id).execute()
+        
+        return len(response.data) > 0
+    except Exception as e:
+        print(f"Error updating profile picture: {e}")
+        return False
+
+def get_user_profile_picture(user_id: str) -> Optional[str]:
+    """Get user's current profile picture URL"""
+    try:
+        response = supabase.table("users").select("profile_picture_url").eq("id", user_id).execute()
+        if response.data:
+            return response.data[0].get("profile_picture_url")
+        return None
+    except Exception as e:
+        print(f"Error getting profile picture: {e}")
+        return None

@@ -1,9 +1,7 @@
-# app/db/base.py
 import os
 from supabase import create_client, Client
 from typing import Optional
 
-# Supabase configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL", "your-supabase-url")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "your-supabase-anon-key")
 
@@ -14,7 +12,6 @@ def init_db():
     """
     try:
         supabase = get_supabase_client()
-        # Test connection by attempting to query the users table
         response = supabase.table("users").select("count", count="exact").limit(1).execute()
         print(f"✅ Supabase connection successful. Users table exists.")
         return True
@@ -29,7 +26,6 @@ def get_supabase_client() -> Client:
     """Get Supabase client instance"""
     return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-# For backward compatibility, you can alias this
 def get_connection():
     """Legacy function name - returns Supabase client instead of SQLite connection"""
     return get_supabase_client()

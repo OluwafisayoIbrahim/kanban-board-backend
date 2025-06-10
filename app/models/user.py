@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String, unique=True, nullable=True, index=True)
     email = Column(String, unique=True, nullable=False, index=True)
     hashed_password = Column(String, nullable=False)
+    profile_picture_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -18,5 +19,6 @@ class User(Base):
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "profile_picture_url": self.profile_picture_url,  
             "created_at": self.created_at.isoformat(),
         }

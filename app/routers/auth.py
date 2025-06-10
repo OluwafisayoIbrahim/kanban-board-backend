@@ -128,6 +128,7 @@ async def get_current_user_simple(request: Request):
                     "id": user["id"],
                     "username": user["username"],
                     "email": user["email"],
+                    "profile_picture_url": user.get("profile_picture_url"),
                     "status": "success"
                 }
     except Exception as e:

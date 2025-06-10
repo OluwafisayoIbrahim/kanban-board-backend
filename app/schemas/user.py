@@ -19,3 +19,8 @@ class User(BaseModel):
     id: str
     username: Optional[str]
     email: EmailStr
+    profile_picture_url: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    profile_picture_url: Optional[str] = None

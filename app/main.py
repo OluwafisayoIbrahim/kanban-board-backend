@@ -6,12 +6,13 @@ import asyncio
 from app.core.config import CORS_ORIGINS
 from app.db.base import init_db
 from app.routers.auth import router as auth_router
+from app.routers.profile import router as profile_router
 
 init_db()
 
 app = FastAPI(
     title="FlowSpace API",
-    description="REST API for FlowSpace Kanban Board",
+    description="REST API for FlowSpace Kanban Board.",
     version="0.1.0",
 )
 
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(profile_router, prefix="/api/profile", tags=["profile"])
 
 @app.get("/", include_in_schema=False)
 async def root():
