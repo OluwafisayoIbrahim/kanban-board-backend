@@ -4,12 +4,13 @@ from datetime import timedelta
 
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here") 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 CORS_ORIGINS = [
     "http://localhost:3000",
     "http://192.168.1.242:3000",
+    "http://172.20.10.12:3000",
     "https://kanban-board-backend-3bfa.onrender.com"
 ]
 
